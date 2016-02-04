@@ -28,30 +28,40 @@ func testBasicRethink(t *testing.T, apiServer persist.APIServer) {
 		},
 	)
 	require.NoError(t, err)
+
 	pipelineInfo, err := apiServer.GetPipelineInfo(
 		context.Background(),
 		&pps.Pipeline{Name: "foo"},
 	)
 	require.NoError(t, err)
 	require.Equal(t, pipelineInfo.PipelineName, "foo")
-	inputCommits := []*pfs.Commit{pfsutil.NewCommit("bar", uuid.NewWithoutDashes())}
+
+	inputCommit := pfsutil.NewCommit("bar", uuid.NewWithoutDashes())
+	inputs := []*pps.JobInput{
+		{Commit: inputCommit},
+	}
 	jobInfo, err := apiServer.CreateJobInfo(
 		context.Background(),
 		&persist.JobInfo{
 			PipelineName: "foo",
-			InputCommit:  inputCommits,
+			Inputs:  inputs,
 		},
 	)
+
+	inputCommit2 := pfsutil.NewCommit("fizz", uuid.NewWithoutDashes())
 	jobID := jobInfo.JobId
-	inputCommits2 := []*pfs.Commit{pfsutil.NewCommit("fizz", uuid.NewWithoutDashes())}
+	inputs2 := []*pps.JobInput{
+		{Commit: inputCommit2},
+	}
 	_, err = apiServer.CreateJobInfo(
 		context.Background(),
 		&persist.JobInfo{
 			PipelineName: "buzz",
-			InputCommit:  inputCommits2,
+			Inputs:  inputs2,
 		},
 	)
 	require.NoError(t, err)
+
 	jobInfo, err = apiServer.InspectJob(
 		context.Background(),
 		&pps.InspectJobRequest{
@@ -63,6 +73,7 @@ func testBasicRethink(t *testing.T, apiServer persist.APIServer) {
 	require.NoError(t, err)
 	require.Equal(t, jobInfo.JobId, jobID)
 	require.Equal(t, "foo", jobInfo.PipelineName)
+
 	jobInfos, err := apiServer.ListJobInfos(
 		context.Background(),
 		&pps.ListJobRequest{
@@ -72,20 +83,22 @@ func testBasicRethink(t *testing.T, apiServer persist.APIServer) {
 	require.NoError(t, err)
 	require.Equal(t, len(jobInfos.JobInfo), 1)
 	require.Equal(t, jobInfos.JobInfo[0].JobId, jobID)
+
 	jobInfos, err = apiServer.ListJobInfos(
 		context.Background(),
 		&pps.ListJobRequest{
-			InputCommit: inputCommits,
+			InputCommit: []*pfs.Commit{inputCommit},
 		},
 	)
 	require.NoError(t, err)
 	require.Equal(t, len(jobInfos.JobInfo), 1)
 	require.Equal(t, jobInfos.JobInfo[0].JobId, jobID)
+
 	jobInfos, err = apiServer.ListJobInfos(
 		context.Background(),
 		&pps.ListJobRequest{
 			Pipeline:    &pps.Pipeline{Name: "foo"},
-			InputCommit: inputCommits,
+			InputCommit: []*pfs.Commit{inputCommit},
 		},
 	)
 	require.NoError(t, err)

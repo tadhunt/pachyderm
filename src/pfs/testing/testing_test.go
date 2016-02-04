@@ -70,10 +70,10 @@ func TestSimple(t *testing.T) {
 
 	checkWrites(t, apiClient, repoName, newCommitID)
 
-	fileInfos, err := pfsutil.ListFile(apiClient, repoName, newCommitID, "a/b", &pfs.Shard{Number: 0, Modulus: 1})
+	fileInfos, err := pfsutil.ListFile(apiClient, repoName, newCommitID, "a/b", &pfs.Shard{FileNumber: 0, FileModulus: 1})
 	require.NoError(t, err)
 	require.Equal(t, testSize, len(fileInfos))
-	fileInfos, err = pfsutil.ListFile(apiClient, repoName, newCommitID, "a/c", &pfs.Shard{Number: 0, Modulus: 1})
+	fileInfos, err = pfsutil.ListFile(apiClient, repoName, newCommitID, "a/c", &pfs.Shard{FileNumber: 0, FileModulus: 1})
 	require.NoError(t, err)
 	require.Equal(t, testSize, len(fileInfos))
 
@@ -84,7 +84,7 @@ func TestSimple(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			fileInfos3, iErr := pfsutil.ListFile(apiClient, repoName, newCommitID, "a/b", &pfs.Shard{Number: uint64(i), Modulus: 7})
+			fileInfos3, iErr := pfsutil.ListFile(apiClient, repoName, newCommitID, "a/b", &pfs.Shard{FileNumber: uint64(i), FileModulus: 7})
 			require.NoError(t, iErr)
 			fileInfos2[i] = fileInfos3
 		}()
@@ -179,7 +179,7 @@ func TestMount(t *testing.T) {
 	mounter := fuse.NewMounter("localhost", apiClient)
 	ready := make(chan bool)
 	go func() {
-		err = mounter.Mount(directory, &pfs.Shard{Number: 0, Modulus: 1}, nil, ready)
+		err = mounter.Mount(directory, &pfs.Shard{FileNumber: 0, FileModulus: 1}, nil, ready)
 		require.NoError(t, err)
 	}()
 	<-ready
@@ -252,7 +252,7 @@ func TestMountBig(t *testing.T) {
 	mounter := fuse.NewMounter("localhost", apiClient)
 	ready := make(chan bool)
 	go func() {
-		err = mounter.Mount(directory, &pfs.Shard{Number: 0, Modulus: 1}, nil, ready)
+		err = mounter.Mount(directory, &pfs.Shard{FileNumber: 0, FileModulus: 1}, nil, ready)
 		require.NoError(t, err)
 	}()
 	<-ready
@@ -312,7 +312,7 @@ func BenchmarkFuse(b *testing.B) {
 	mounter := fuse.NewMounter("localhost", apiClient)
 	ready := make(chan bool)
 	go func() {
-		err := mounter.Mount(directory, &pfs.Shard{Number: 0, Modulus: 1}, nil, ready)
+		err := mounter.Mount(directory, &pfs.Shard{FileNumber: 0, FileModulus: 1}, nil, ready)
 		require.NoError(b, err)
 	}()
 	<-ready
@@ -389,7 +389,7 @@ func checkWrites(tb testing.TB, apiClient pfs.APIClient, repoName string, commit
 				fmt.Sprintf("a/b/file%d", i),
 				0,
 				0,
-				&pfs.Shard{Number: 0, Modulus: 1},
+				&pfs.Shard{FileNumber: 0, FileModulus: 1},
 				buffer,
 			)
 			require.NoError(tb, iErr)
@@ -403,7 +403,7 @@ func checkWrites(tb testing.TB, apiClient pfs.APIClient, repoName string, commit
 				fmt.Sprintf("a/c/file%d", i),
 				0,
 				0,
-				&pfs.Shard{Number: 0, Modulus: 1},
+				&pfs.Shard{FileNumber: 0, FileModulus: 1},
 				buffer,
 			)
 			require.NoError(tb, iErr)
